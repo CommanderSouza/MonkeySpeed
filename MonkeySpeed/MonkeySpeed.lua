@@ -11,25 +11,25 @@ local function handleCommands(msg, editbox)
 	-- this command toggles the percent display
   if command == "percent" then
 		MonkeySpeed_TogglePercent()
-		DEFAULT_CHAT_FRAME:AddMsg("Toggling percent display")
+		DEFAULT_CHAT_FRAME:AddMessage("Toggling percent display")
 	-- this command toggles the coloured speed bar display
 	elseif command == "bar" then
     MonkeySpeed_ToggleBar()
-		DEFAULT_CHAT_FRAME:AddMsg("Toggling bar display")
+		DEFAULT_CHAT_FRAME:AddMessage("Toggling bar display")
 	-- this command toggles the debug mode
   elseif command == "debug" then
 		MonkeySpeed_ToggleDebug()
-		DEFAULT_CHAT_FRAME:AddMsg("Toggling debug mode")
+		DEFAULT_CHAT_FRAME:AddMessage("Toggling debug mode")
 	-- this command toggles the lock
   elseif command == "lock" then
 		MonkeySpeed_ToggleLock()
-		DEFAULT_CHAT_FRAME:AddMsg("Toggling bar lock")
+		DEFAULT_CHAT_FRAME:AddMessage("Toggling bar lock")
 	-- this command recalibrates the speed calculations for this zone
   elseif command == "calibrate" then
-		DEFAULT_CHAT_FRAME:AddMsg("Calibrating normal speed")
+		DEFAULT_CHAT_FRAME:AddMessage("Calibrating normal speed")
 		MonkeySpeedSlash_CmdCalibrate()
   else
-		DEFAULT_CHAT_FRAME:AddMsg("Toggling monkeyspeed display")
+		DEFAULT_CHAT_FRAME:AddMessage("Toggling monkeyspeed display")
 		MonkeySpeed_ToggleDisplay()
   end
 end
