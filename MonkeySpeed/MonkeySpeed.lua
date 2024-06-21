@@ -1,6 +1,36 @@
+local function handleCommands(msg, editbox)
+  local args = {}
+  for word in string.gfind(msg, '%S+') do
+    if word ~= "" then
+      table.insert(args, word)
+    end
+  end
+
+  local command = args[1]
+
+	-- this command toggles the percent display
+  if command == "percent" then
+		MonkeySpeed_TogglePercent()
+	-- this command toggles the coloured speed bar display
+	elseif command == "bar" then
+    MonkeySpeed_ToggleBar()
+	-- this command toggles the debug mode
+  elseif command == "debug" then
+		MonkeySpeed_ToggleDebug()
+	-- this command toggles the lock
+  elseif command == "lock" then
+		MonkeySpeed_ToggleLock()
+	-- this command recalibrates the speed calculations for this zone
+  elseif command == "calibrate" then
+		MonkeySpeedSlash_CmdCalibrate()
+  else
+		MonkeySpeed_ToggleDisplay()
+  end
+end
+
 -- OnLoad Function
 function MonkeySpeed_OnLoad()
-	
+
 	-- register events
 	this:RegisterEvent("VARIABLES_LOADED");
 	this:RegisterEvent("UNIT_NAME_UPDATE");			-- this is the event I use to get per character config settings
@@ -8,39 +38,12 @@ function MonkeySpeed_OnLoad()
 	this:RegisterEvent("ZONE_CHANGED_NEW_AREA");
 
 	-- register chat slash commands
-	-- this command toggles the percent display
-	SlashCmdList["MONKEYSPEED_PERCENT"] = MonkeySpeed_TogglePercent;
-	SLASH_MONKEYSPEED_PERCENT1 = "/monkeyspeedpercent";
-	SLASH_MONKEYSPEED_PERCENT2 = "/mspercent";
-	
-	-- this command toggles the coloured speed bar display
-	SlashCmdList["MONKEYSPEED_BAR"] = MonkeySpeed_ToggleBar;
-	SLASH_MONKEYSPEED_BAR1 = "/monkeyspeedbar";
-	SLASH_MONKEYSPEED_BAR2 = "/msbar";
+	SLASH_MONKEYSPEED1 = "/mspeed";
+	SlashCmdList["MONKEYSPEED"] = handleCommands
 
-	-- this command toggles the whole speed bar display
-	SlashCmdList["MONKEYSPEED_DISPLAY"] = MonkeySpeed_ToggleDisplay;
-	SLASH_MONKEYSPEED_DISPLAY1 = "/monkeyspeed";
-	SLASH_MONKEYSPEED_DISPLAY2 = "/mspeed";
-	
-	-- this command toggles the debug mode
-	SlashCmdList["MONKEYSPEED_DEBUG"] = MonkeySpeed_ToggleDebug;
-	SLASH_MONKEYSPEED_DEBUG1 = "/monkeyspeeddebug";
-	SLASH_MONKEYSPEED_DEBUG2 = "/msdebug";
-	
-	-- this command toggles the lock
-	SlashCmdList["MONKEYSPEED_LOCK"] = MonkeySpeed_ToggleLock;
-	SLASH_MONKEYSPEED_LOCK1 = "/monkeyspeedlock";
-	SLASH_MONKEYSPEED_LOCK2 = "/mslock";
-
-	-- this command recalibrates the speed calculations for this zone
-	SlashCmdList["MONKEYSPEED_CALIBRATE"] = MonkeySpeedSlash_CmdCalibrate;
-	SLASH_MONKEYSPEED_CALIBRATE1 = "/monkeyspeedcalibrate";
-	SLASH_MONKEYSPEED_CALIBRATE2 = "/mscalibrate";
-	
 	-- MonkeySpeedFrame:SetBackdropBorderColor(0.75, 0.75, 0.75, 1.0);
 	MonkeySpeedFrame:SetBackdropBorderColor(1.0, 0.6901960784313725, 0.0, 1.0);
-	
+
 	MonkeySpeedOptions();	
 end
 
