@@ -119,6 +119,7 @@ function MonkeySpeed_OnEvent(event)
 	end -- ZONE_CHANGED_NEW_AREA
 end
 
+local baserate = 7
 -- OnUpdate Function (heavily based off code in Telo's Clock)
 function MonkeySpeed_OnUpdate(arg1)
 
@@ -131,17 +132,17 @@ function MonkeySpeed_OnUpdate(arg1)
 	MonkeySpeed.m_iDeltaTime = MonkeySpeed.m_iDeltaTime + arg1;
 	
 	-- update the speed calculation
-	MonkeySpeed.m_vCurrPos.x, MonkeySpeed.m_vCurrPos.y = GetPlayerMapPosition("player");
+	MonkeySpeed.m_vCurrPos.x, MonkeySpeed.m_vCurrPos.y = UnitPosition("player")
 	MonkeySpeed.m_vCurrPos.x = MonkeySpeed.m_vCurrPos.x + 0.0;
 	MonkeySpeed.m_vCurrPos.y = MonkeySpeed.m_vCurrPos.y + 0.0;
 
 	if (MonkeySpeed.m_vCurrPos.x) then
 		local dist;
-		
+
 		-- travel speed ignores Z-distance (i.e. you run faster up or down hills)	
 		-- x and y coords are not square, had to weight the x by 2.25 to make the readings match the y axis.
 		dist = math.sqrt(
-				((MonkeySpeed.m_vLastPos.x - MonkeySpeed.m_vCurrPos.x) * (MonkeySpeed.m_vLastPos.x - MonkeySpeed.m_vCurrPos.x) * 2.25 ) +
+				((MonkeySpeed.m_vLastPos.x - MonkeySpeed.m_vCurrPos.x) * (MonkeySpeed.m_vLastPos.x - MonkeySpeed.m_vCurrPos.x)) +
 				((MonkeySpeed.m_vLastPos.y - MonkeySpeed.m_vCurrPos.y) * (MonkeySpeed.m_vLastPos.y - MonkeySpeed.m_vCurrPos.y)));
 		
 		MonkeySpeed.m_fSpeedDist = MonkeySpeed.m_fSpeedDist + dist;
@@ -151,118 +152,45 @@ function MonkeySpeed_OnUpdate(arg1)
 			local zonenum;
 			local zonename;
 			local contnum;
-			local baserate;
+
 
 			zonenum = GetCurrentMapZone();
 			zonename = GetZoneText();
-			
 
-			if (zonenum ~= 0) then
-				contnum = GetCurrentMapContinent();
-				--f,h,w = GetMapInfo();
-
-				--quel fix. Was throwing a nil error when entering a previously un-encountered zone.
-				if (MonkeySpeedConfig.m_ZoneBaseline[contnum][zonenum] == nil) then
-					MonkeySpeedConfig.m_ZoneBaseline[contnum][zonenum] = {zid=zonenum, rate=.0001, name=zonename};
-				end
-
-				if (MonkeySpeed.m_bCalibrate == true) then
-					-- recalibrate this zone, the user should know this should be done when running at 100%
-					-- quel fix, changed contnum to table index
-					-- MonkeySpeedConfig.m_ZoneBaseline[contnum][zonenum].rate = MonkeySpeed.m_fSpeedDist / MonkeySpeed.m_iDeltaTime;
-					MonkeySpeedConfig.m_ZoneBaseline[contnum][zonenum].rate = (MonkeySpeed.m_fSpeedDist / MonkeySpeed.m_iDeltaTime) / MonkeySpeed.calibrateSpeed;
-					MonkeySpeedConfig.m_ZoneBaseline[contnum][zonenum].name = zonename;
-	
-					-- done calibrating
-					MonkeySpeed.m_bCalibrate = false;
-				end
-
-				-- quel fix for contnum design change
-				baserate = MonkeySpeedConfig.m_ZoneBaseline[contnum][zonenum].rate;
-				
-				-- quel fix, added capture of zone names since all the zone number/names changed in 2.0
-				if (MonkeySpeedConfig.m_ZoneBaseline[contnum][zonenum].name == nil) then
-					MonkeySpeedConfig.m_ZoneBaseline[contnum][zonenum].name = zonename;
-				end
-
-				if (MonkeySpeedConfig[MonkeySpeed.m_strPlayer].m_bDebugMode == true) then
-					-- Debug code for figuring out new zone rates
-
-					if (DEFAULT_CHAT_FRAME) then
-						if (dist ~= 0) then
-							DEFAULT_CHAT_FRAME:AddMessage(format("ZoneBaseline"..contnum.."  zid="..zonenum.."  rate=%.5f", 
-								(MonkeySpeed.m_fSpeedDist / MonkeySpeed.m_iDeltaTime)));
-						end
-					end
-				end
-				
-			else
-				-- special zone
-
-				--f,h,w = GetMapInfo();
-
-				if (MonkeySpeed.m_bCalibrate == true) then
-					-- recalibrate this zone, the user should know this should be done when running at 100%
-					-- MonkeySpeedConfig.m_SpecialZoneBaseline[zonename] = MonkeySpeed.m_fSpeedDist / MonkeySpeed.m_iDeltaTime;
-					MonkeySpeedConfig.m_SpecialZoneBaseline[zonename] = (MonkeySpeed.m_fSpeedDist / MonkeySpeed.m_iDeltaTime) / MonkeySpeed.calibrateSpeed; 
-					-- done calibrating
-					MonkeySpeed.m_bCalibrate = false;
-				end
-
-				baserate = MonkeySpeedConfig.m_SpecialZoneBaseline[zonename];
-
-				if (MonkeySpeedConfig[MonkeySpeed.m_strPlayer].m_bDebugMode == true) then
-					-- Debug code for figuring out new zone rates
-
-					if (DEFAULT_CHAT_FRAME) then
-						if (dist ~= 0) then
-							DEFAULT_CHAT_FRAME:AddMessage(format("SpecialZoneBaseline  name=" .. zonename .. "  rate=%.5f",
-								(MonkeySpeed.m_fSpeedDist / MonkeySpeed.m_iDeltaTime)));
-						end
-					end
-				end
+			if (MonkeySpeed.m_bCalibrate == true) then
+				-- recalibrate this zone, the user should know this should be done when running at 100%
+				-- MonkeySpeedConfig.m_SpecialZoneBaseline[zonename] = MonkeySpeed.m_fSpeedDist / MonkeySpeed.m_iDeltaTime;
+				baserate = (MonkeySpeed.m_fSpeedDist / MonkeySpeed.m_iDeltaTime) / MonkeySpeed.calibrateSpeed; 
+				-- done calibrating
+				MonkeySpeed.m_bCalibrate = false;
 			end
 
+			MonkeySpeed.m_fSpeed = MonkeySpeed_Round(((MonkeySpeed.m_fSpeedDist / MonkeySpeed.m_iDeltaTime) / baserate) * 100);
 
-			if (baserate ~= nil and baserate ~= 0) then
+			MonkeySpeed.m_fSpeedDist = 0.0;
+			MonkeySpeed.m_iDeltaTime = 0.0;
 
-				MonkeySpeed.m_fSpeed = MonkeySpeed_Round(((MonkeySpeed.m_fSpeedDist / MonkeySpeed.m_iDeltaTime) / baserate) * 100);
-	
-				MonkeySpeed.m_fSpeedDist = 0.0;
-				MonkeySpeed.m_iDeltaTime = 0.0;
-	
-				if (MonkeySpeedConfig[MonkeySpeed.m_strPlayer].m_bDisplayPercent) then
-					-- Set the text for the speedometer
-					MonkeySpeedText:SetText(format("%d%%", MonkeySpeed.m_fSpeed));
-				end
-	
-				if (MonkeySpeedConfig[MonkeySpeed.m_strPlayer].m_bDisplayBar) then
-					-- Set the colour of the bar
-					if (MonkeySpeed.m_fSpeed == 0.0) then
-						MonkeySpeedBar:SetVertexColor(1, 0, 0);
-					elseif (MonkeySpeed.m_fSpeed < 100.0) then
-						MonkeySpeedBar:SetVertexColor(1, 0.25, 0);
-					elseif (MonkeySpeed.m_fSpeed == 100.0) then
-						MonkeySpeedBar:SetVertexColor(1, 0.5, 0);
-					elseif ((MonkeySpeed.m_fSpeed > 100.0) and (MonkeySpeed.m_fSpeed < 140.0)) then
-						MonkeySpeedBar:SetVertexColor(0, 1, 0);
-					elseif ((MonkeySpeed.m_fSpeed >= 140.0) and (MonkeySpeed.m_fSpeed < 200.0)) then
-						MonkeySpeedBar:SetVertexColor(1, 0, 1);
-					elseif ((MonkeySpeed.m_fSpeed >= 200.0) and (MonkeySpeed.m_fSpeed < 550.0)) then
-						MonkeySpeedBar:SetVertexColor(0.5, 0, 1);
-					elseif (MonkeySpeed.m_fSpeed >= 550.0) then
-						MonkeySpeedBar:SetVertexColor(0, 0, 1);
-					end
-				end
-			else
-				if (MonkeySpeedConfig[MonkeySpeed.m_strPlayer].m_bDisplayPercent) then
-					-- Set the text for the speedometer
-					MonkeySpeedText:SetText("???%");
-				end
-	
-				if (MonkeySpeedConfig[MonkeySpeed.m_strPlayer].m_bDisplayBar) then
-					-- Set the colour of the bar
-					MonkeySpeedBar:SetVertexColor(0, 0, 0);
+			if (MonkeySpeedConfig[MonkeySpeed.m_strPlayer].m_bDisplayPercent) then
+				-- Set the text for the speedometer
+				MonkeySpeedText:SetText(format("%d%%", MonkeySpeed.m_fSpeed));
+			end
+
+			if (MonkeySpeedConfig[MonkeySpeed.m_strPlayer].m_bDisplayBar) then
+				-- Set the colour of the bar
+				if (MonkeySpeed.m_fSpeed == 0.0) then
+					MonkeySpeedBar:SetVertexColor(1, 0, 0);
+				elseif (MonkeySpeed.m_fSpeed < 100.0) then
+					MonkeySpeedBar:SetVertexColor(1, 0.25, 0);
+				elseif (MonkeySpeed.m_fSpeed == 100.0) then
+					MonkeySpeedBar:SetVertexColor(1, 0.5, 0);
+				elseif ((MonkeySpeed.m_fSpeed > 100.0) and (MonkeySpeed.m_fSpeed < 140.0)) then
+					MonkeySpeedBar:SetVertexColor(0, 1, 0);
+				elseif ((MonkeySpeed.m_fSpeed >= 140.0) and (MonkeySpeed.m_fSpeed < 200.0)) then
+					MonkeySpeedBar:SetVertexColor(1, 0, 1);
+				elseif ((MonkeySpeed.m_fSpeed >= 200.0) and (MonkeySpeed.m_fSpeed < 550.0)) then
+					MonkeySpeedBar:SetVertexColor(0.5, 0, 1);
+				elseif (MonkeySpeed.m_fSpeed >= 550.0) then
+					MonkeySpeedBar:SetVertexColor(0, 0, 1);
 				end
 			end
 		end

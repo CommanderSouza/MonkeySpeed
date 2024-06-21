@@ -1,5 +1,6 @@
 # MonkeySpeed
 MonkeySpeed backported for 1.12 from the TBC version.
+* Uses superwow absolute position to avoid needing zone info
 
 ### Description:
 The MonkeySpeed AddOn for WoW displays your speed as a percentage of run speed.<br>
